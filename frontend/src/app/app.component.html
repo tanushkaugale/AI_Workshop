@@ -1,0 +1,637 @@
+<!-- Dynamic Aurora Background & Grid -->
+<div class="aurora-bg">
+  <div class="aurora-blob blob-1"></div>
+  <div class="aurora-blob blob-2"></div>
+  <div class="aurora-blob blob-3"></div>
+</div>
+<div class="grid-overlay"></div>
+
+<!-- Main Application Shell -->
+<div class="app-layout">
+  
+  <!-- ================= TOP NAVIGATION HEADER ================= -->
+  <header class="app-header glass-panel">
+    <div class="header-content">
+      
+      <!-- Brand & Title -->
+      <div class="brand-cluster">
+        <div class="brand-logo-glow">
+          <svg class="cane-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v20M8 5c0 3 4 4 4 7s-4 4-4 7M16 5c0 3-4 4-4 7s4 4 4 7" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <div class="brand-title-row">
+            <h1 class="brand-name">SANJIVANI SUGAR FACTORY</h1>
+            <span class="mcp-badge">COOPERATIVE MILL</span>
+          </div>
+          <p class="brand-subtitle">Sugarcane Supply & Farmer Payment Intelligence Portal</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs (User Focused) -->
+      <nav class="nav-tabs" role="tablist">
+        <button 
+          class="nav-tab-btn" 
+          [class.active]="activeTab() === 'chat'" 
+          (click)="switchTab('chat')">
+          <span class="tab-icon">🤖</span>
+          <span>AI Assistant</span>
+        </button>
+
+        <button 
+          class="nav-tab-btn" 
+          [class.active]="activeTab() === 'registry'" 
+          (click)="switchTab('registry')">
+          <span class="tab-icon">🌾</span>
+          <span>Farmer Registry</span>
+        </button>
+
+        <button 
+          class="nav-tab-btn" 
+          [class.active]="activeTab() === 'analytics'" 
+          (click)="switchTab('analytics')">
+          <span class="tab-icon">📊</span>
+          <span>Mill Analytics</span>
+        </button>
+
+        <button 
+          class="nav-tab-btn" 
+          [class.active]="activeTab() === 'query'" 
+          (click)="switchTab('query')">
+          <span class="tab-icon">📑</span>
+          <span>Quick Reports</span>
+        </button>
+      </nav>
+
+      <!-- System Health Beacon & Theme Switcher -->
+      <div class="header-actions">
+        <!-- DB & AI Status Pill -->
+        <div class="status-pill cursor-pointer" (click)="isHealthModalOpen.set(true)" title="View System Status">
+          <span class="status-beacon" [style.background-color]="api.isDbConnected() ? '#10b981' : '#f59e0b'"></span>
+          <span class="status-text">{{ api.isDbConnected() ? 'Database Connected' : 'Demo Mode' }}</span>
+        </div>
+
+        <!-- Theme Switcher Menu -->
+        <div class="theme-selector">
+          <button 
+            class="theme-dot emerald" 
+            [class.active]="currentTheme() === 'emerald'"
+            (click)="setTheme('emerald')" 
+            title="Emerald Agro Theme"></button>
+          <button 
+            class="theme-dot amber" 
+            [class.active]="currentTheme() === 'amber'"
+            (click)="setTheme('amber')" 
+            title="Cane Gold Theme"></button>
+          <button 
+            class="theme-dot sapphire" 
+            [class.active]="currentTheme() === 'sapphire'"
+            (click)="setTheme('sapphire')" 
+            title="Midnight Sapphire Theme"></button>
+          <button 
+            class="theme-dot light" 
+            [class.active]="currentTheme() === 'light'"
+            (click)="setTheme('light')" 
+            title="Light Agro Theme"></button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= MAIN VIEW CONTENT ================= -->
+  <main class="main-content">
+    
+    <!-- ----------------- TAB 1: AI ASSISTANT ----------------- -->
+    <section *ngIf="activeTab() === 'chat'" class="tab-pane active-pane chat-view">
+      
+      <!-- Chat Welcome & Quick Suggestions Banner -->
+      <div class="chat-intro-card glass-panel">
+        <div class="intro-header">
+          <div class="intro-icon-glow">🌾</div>
+          <div class="intro-text">
+            <h2>Sanjivani Sugarcane Management AI Assistant</h2>
+            <p>Ask questions in plain English to get immediate, verified answers about farmers, supply quantities, and payment disbursements.</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" (click)="clearChat()" title="Clear Chat History">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+            </svg>
+            Clear History
+          </button>
+        </div>
+
+        <!-- Quick Prompts Pill Row -->
+        <div class="prompt-chips-container">
+          <span class="chips-label">Quick Inquiries:</span>
+          <div class="chips-list">
+            <button 
+              *ngFor="let p of quickPrompts" 
+              class="prompt-chip" 
+              (click)="sendPrompt(p.query)">
+              {{ p.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages Thread -->
+      <div class="chat-messages-container glass-panel">
+        <div class="messages-scroll-area">
+          
+          <div 
+            *ngFor="let msg of chatMessages()" 
+            class="message-wrapper" 
+            [class.user-msg]="msg.role === 'user'" 
+            [class.ai-msg]="msg.role === 'assistant'">
+            
+            <!-- Avatar -->
+            <div class="msg-avatar">
+              <span *ngIf="msg.role === 'user'">👤</span>
+              <span *ngIf="msg.role === 'assistant'">🌾</span>
+            </div>
+
+            <!-- Message Body -->
+            <div class="msg-content-block">
+              <div class="msg-meta-row">
+                <span class="msg-sender">{{ msg.role === 'user' ? 'Factory Supervisor' : 'Sanjivani Mill Assistant' }}</span>
+                <span class="msg-time">{{ msg.timestamp | date:'shortTime' }}</span>
+                <span *ngIf="msg.latencyMs" class="latency-badge">{{ msg.latencyMs }}ms response</span>
+              </div>
+
+              <!-- Content text with Markdown formatting support -->
+              <div class="msg-text formatted-text" [innerHTML]="msg.content"></div>
+
+              <!-- Fact-Check Accordion (User-Friendly) -->
+              <div *ngIf="msg.steps && msg.steps.length > 0" class="mcp-trace-card">
+                <div class="mcp-trace-header" (click)="toggleSteps(msg)">
+                  <div class="trace-title-cluster">
+                    <span class="trace-pulse-icon">✓</span>
+                    <span class="trace-header-title">Verified Factory Database Records</span>
+                    <span class="steps-count-badge">{{ msg.steps.length }} Facts Verified</span>
+                  </div>
+                  <span class="accordion-arrow">{{ msg.isStepsExpanded ? '▲ Hide Details' : '▼ View Verification Trace' }}</span>
+                </div>
+
+                <div *ngIf="msg.isStepsExpanded" class="mcp-trace-body">
+                  <div class="steps-timeline">
+                    <div *ngFor="let step of msg.steps" class="timeline-step">
+                      <div class="step-bullet" [ngClass]="'step-type-' + step.type"></div>
+                      <div class="step-details">
+                        <div class="step-title-line">
+                          <span class="step-name">{{ step.title }}</span>
+                        </div>
+                        <p class="step-desc">{{ step.description }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Tool Call Records Summary -->
+                  <div *ngIf="msg.toolCalls && msg.toolCalls.length > 0" class="tool-calls-summary">
+                    <div class="tool-summary-header">Verified Database Records:</div>
+                    <div class="tool-pills-row">
+                      <span *ngFor="let tc of msg.toolCalls" class="tool-tag">
+                        🌾 Retrieved {{ tc.returnedCount }} official supplier record(s)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Message Actions -->
+              <div class="msg-actions-row">
+                <button class="msg-action-btn" (click)="copyText(msg.content)" title="Copy Answer">
+                  📋 Copy Answer
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Live Sending Indicator -->
+          <div *ngIf="isChatSending()" class="message-wrapper ai-msg loading-msg">
+            <div class="msg-avatar">🌾</div>
+            <div class="msg-content-block">
+              <div class="loading-state-cluster">
+                <div class="spinner-orbit"></div>
+                <div class="loading-labels">
+                  <span class="loading-main-text">Querying Factory Database...</span>
+                  <span class="loading-sub-text">Retrieving verified sugarcane supplier records</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div class="chat-input-bar">
+          <input 
+            type="text" 
+            class="chat-text-input input-modern" 
+            placeholder="Ask about sugarcane supply tons, payments, villages, or comparisons..."
+            [(ngModel)]="userQuestion"
+            (keyup.enter)="sendPrompt()"
+            [disabled]="isChatSending()"
+          />
+          <button 
+            class="btn btn-primary send-btn" 
+            [disabled]="!userQuestion.trim() || isChatSending()"
+            (click)="sendPrompt()">
+            <span>Send</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ----------------- TAB 2: FARMER REGISTRY ----------------- -->
+    <section *ngIf="activeTab() === 'registry'" class="tab-pane active-pane registry-view">
+      
+      <!-- Top 4 KPI Summary Cards -->
+      <div class="kpi-grid">
+        
+        <div class="kpi-card glass-card">
+          <div class="kpi-icon-box cane-gradient">🌾</div>
+          <div class="kpi-meta">
+            <span class="kpi-label">TOTAL SUGARCANE SUPPLY</span>
+            <h3 class="kpi-value">{{ formatTons(api.stats()?.totals?.totalSupplyTons) }}</h3>
+            <span class="kpi-sub">Avg {{ api.stats()?.totals?.averageTonsPerFarmer }} tons / farmer</span>
+          </div>
+        </div>
+
+        <div class="kpi-card glass-card">
+          <div class="kpi-icon-box gold-gradient">💰</div>
+          <div class="kpi-meta">
+            <span class="kpi-label">TOTAL DISBURSED (PAID)</span>
+            <h3 class="kpi-value text-emerald">{{ formatCurrency(api.stats()?.totals?.totalAmountPaid) }}</h3>
+            <span class="kpi-sub clearance-rate">
+              {{ api.stats()?.totals?.overallPaymentClearanceRate }}% Clearance Ratio
+            </span>
+          </div>
+        </div>
+
+        <div class="kpi-card glass-card">
+          <div class="kpi-icon-box alert-gradient">⏳</div>
+          <div class="kpi-meta">
+            <span class="kpi-label">TOTAL PENDING BALANCE</span>
+            <h3 class="kpi-value text-amber">{{ formatCurrency(api.stats()?.totals?.totalPaymentPending) }}</h3>
+            <span class="kpi-sub">Awaiting mill fund release</span>
+          </div>
+        </div>
+
+        <div class="kpi-card glass-card">
+          <div class="kpi-icon-box blue-gradient">👥</div>
+          <div class="kpi-meta">
+            <span class="kpi-label">ACTIVE PRODUCERS</span>
+            <h3 class="kpi-value">{{ api.stats()?.totals?.farmersCount || api.farmers().length }} Farmers</h3>
+            <span class="kpi-sub">Across 10 Regional Villages</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Controls & Filter Toolbar -->
+      <div class="registry-toolbar glass-panel">
+        <div class="search-input-group">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="M21 21l-4.35-4.35"></path>
+          </svg>
+          <input 
+            type="text" 
+            class="search-input input-modern" 
+            placeholder="Search by farmer name or village..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event); onSearchChange()"
+          />
+        </div>
+
+        <!-- Village Filter Carousel -->
+        <div class="village-filter-row">
+          <span class="filter-label">Villages:</span>
+          <div class="village-pills-scroll">
+            <button 
+              *ngFor="let v of villagesList" 
+              class="village-filter-pill" 
+              [class.active]="selectedVillage().toLowerCase() === v.toLowerCase()"
+              (click)="onVillageFilter(v)">
+              {{ v }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Add Farmer Trigger -->
+        <button class="btn btn-primary" (click)="openAddFarmerModal()">
+          <span>+ Add Farmer Record</span>
+        </button>
+      </div>
+
+      <!-- Farmers Data Table -->
+      <div class="table-container glass-panel">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th (click)="onSortChange('id')" class="cursor-pointer">ID</th>
+              <th (click)="onSortChange('name')" class="cursor-pointer">Farmer Name</th>
+              <th (click)="onSortChange('village')" class="cursor-pointer">Village</th>
+              <th (click)="onSortChange('sugarcane_supply_tons')" class="cursor-pointer text-right">Supply (Tons)</th>
+              <th (click)="onSortChange('amount_paid')" class="cursor-pointer text-right">Paid Amount</th>
+              <th (click)="onSortChange('payment_pending')" class="cursor-pointer text-right">Pending Balance</th>
+              <th>Payment Clearance</th>
+              <th class="text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let farmer of api.farmers()" class="table-row">
+              <td class="font-mono text-muted">#{{ farmer.id }}</td>
+              <td>
+                <div class="farmer-identity">
+                  <div class="avatar-initials">{{ farmer.name.slice(0, 2).toUpperCase() }}</div>
+                  <div class="identity-names">
+                    <span class="farmer-full-name">{{ farmer.name }}</span>
+                    <span class="factory-tag">{{ farmer.factory_name || 'Sanjivani Sugar Factory' }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="village-badge">📍 {{ farmer.village }}</span>
+              </td>
+              <td class="text-right font-mono font-bold text-cane">
+                {{ formatTons(farmer.sugarcane_supply_tons) }}
+              </td>
+              <td class="text-right font-mono text-emerald">
+                {{ formatCurrency(farmer.amount_paid) }}
+              </td>
+              <td class="text-right font-mono text-amber font-bold">
+                {{ formatCurrency(farmer.payment_pending) }}
+              </td>
+              <td>
+                <div class="clearance-bar-container">
+                  <div class="clearance-bar-track">
+                    <div 
+                      class="clearance-bar-fill" 
+                      [style.width.%]="calculateClearance(farmer.amount_paid, farmer.payment_pending)">
+                    </div>
+                  </div>
+                  <span class="clearance-percent">
+                    {{ calculateClearance(farmer.amount_paid, farmer.payment_pending) }}%
+                  </span>
+                </div>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-ghost btn-sm" (click)="askAboutFarmer(farmer)" title="Ask AI about this farmer">
+                  🤖 Inquire
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="api.farmers().length === 0">
+              <td colspan="8" class="empty-table-cell">
+                No farmer records found matching the filter criteria.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ----------------- TAB 3: MILL ANALYTICS (USER FOCUSED) ----------------- -->
+    <section *ngIf="activeTab() === 'analytics'" class="tab-pane active-pane analytics-view">
+      
+      <!-- Top Producer Spotlight Banner -->
+      <div *ngIf="api.stats()?.topFarmer as top" class="spotlight-card glass-panel">
+        <div class="spotlight-crown">🏆</div>
+        <div class="spotlight-details">
+          <span class="spotlight-badge">TOP SUGARCANE PRODUCER OF THE SEASON</span>
+          <h4 class="spotlight-name">{{ top.name }} <span class="spotlight-village">({{ top.village }})</span></h4>
+          <p class="spotlight-stats">
+            Supplied <strong>{{ top.sugarcane_supply_tons }} Tons</strong> • Received <strong>{{ formatCurrency(top.amount_paid) }}</strong> • Pending <strong>{{ formatCurrency(top.payment_pending) }}</strong>
+          </p>
+        </div>
+        <button class="btn btn-secondary btn-sm" (click)="askAboutFarmer(top)">
+          Ask AI About {{ top.name.split(' ')[0] }}
+        </button>
+      </div>
+
+      <!-- Village Breakdown Grid -->
+      <div class="analytics-section-card glass-panel">
+        <div class="section-card-header">
+          <div>
+            <h3>📍 Regional Village Supply & Payment Distribution</h3>
+            <p>Comparative summary of sugarcane tonnage received and payout status by village</p>
+          </div>
+        </div>
+
+        <div class="village-stats-grid">
+          <div *ngFor="let v of api.stats()?.villages" class="village-stat-card glass-card">
+            <div class="v-card-top">
+              <div class="v-name-cluster">
+                <span class="v-pin">📍</span>
+                <span class="v-title">{{ v.village }}</span>
+              </div>
+              <span class="v-farmer-count">{{ v.count }} Farmer(s)</span>
+            </div>
+
+            <div class="v-metric-row">
+              <span class="v-metric-label">Supply Tonnage:</span>
+              <span class="v-metric-val font-bold text-cane">{{ v.supplyTons }} Tons</span>
+            </div>
+
+            <div class="v-progress-track">
+              <div class="v-progress-bar" [style.width.%]="(v.supplyTons / (api.stats()?.totals?.totalSupplyTons || 1)) * 300"></div>
+            </div>
+
+            <div class="v-finance-split">
+              <div>
+                <span class="v-fin-label">Paid</span>
+                <span class="v-fin-val text-emerald">{{ formatCurrency(v.paid) }}</span>
+              </div>
+              <div>
+                <span class="v-fin-label">Pending</span>
+                <span class="v-fin-val text-amber">{{ formatCurrency(v.pending) }}</span>
+              </div>
+            </div>
+
+            <button class="btn btn-ghost btn-sm v-inquire-btn" (click)="sendPrompt('Summarize farmer payments and supply details for ' + v.village + ' village')">
+              Inquire {{ v.village }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ----------------- TAB 4: QUICK REPORTS ----------------- -->
+    <section *ngIf="activeTab() === 'query'" class="tab-pane active-pane query-view">
+      
+      <div class="query-layout-card glass-panel">
+        <div class="query-header">
+          <div>
+            <h2>📑 Sugarcane Supply & Payment Statement Generator</h2>
+            <p>Filter and generate instant statements for auditing, farmer inquiries, and mill management.</p>
+          </div>
+        </div>
+
+        <div class="query-controls-bar">
+          <div class="form-group-inline">
+            <label class="form-label">Select Village / Sector:</label>
+            <select class="input-modern query-select" [(ngModel)]="queryVillageParam">
+              <option value="">All Regional Villages (Full Mill Statement)</option>
+              <option *ngFor="let v of villagesList.slice(1)" [value]="v">{{ v }}</option>
+            </select>
+          </div>
+
+          <button 
+            class="btn btn-primary" 
+            [disabled]="isQueryLoading()" 
+            (click)="runQuickReport()">
+            <span *ngIf="!isQueryLoading()">Generate Statement</span>
+            <span *ngIf="isQueryLoading()">Generating Statement...</span>
+          </button>
+        </div>
+
+        <!-- Statement Table View -->
+        <div *ngIf="queryResult() as q" class="report-results-wrapper">
+          <div class="report-summary-bar">
+            <span class="report-count-tag">Showing {{ q.recordsCount }} Registered Supplier(s)</span>
+            <span class="report-latency-tag">Verified in {{ q.latencyMs }}ms</span>
+            <button class="btn btn-secondary btn-sm" (click)="copyText(q.rpcResponse.result.content[0].text)">
+              📋 Copy Raw Data
+            </button>
+          </div>
+
+          <table class="modern-table report-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Farmer Name</th>
+                <th>Village</th>
+                <th class="text-right">Supply (Tons)</th>
+                <th class="text-right">Amount Paid</th>
+                <th class="text-right">Pending Dues</th>
+                <th>Factory Designation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of q.records" class="table-row">
+                <td class="font-mono text-muted">#{{ row.id }}</td>
+                <td class="font-bold">{{ row.name }}</td>
+                <td>📍 {{ row.village }}</td>
+                <td class="text-right font-mono text-cane font-bold">{{ row.sugarcane_supply_tons }}</td>
+                <td class="text-right font-mono text-emerald">{{ formatCurrency(row.amount_paid) }}</td>
+                <td class="text-right font-mono text-amber font-bold">{{ formatCurrency(row.payment_pending) }}</td>
+                <td class="text-muted">{{ row.factory_name }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Initial Placeholder -->
+        <div *ngIf="!queryResult()" class="query-empty-state">
+          <div class="empty-icon">📑</div>
+          <h3>Generate Instant Sugarcane Statements</h3>
+          <p>Choose a village filter above and click <strong>Generate Statement</strong> to view and export records.</p>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ================= ADD FARMER MODAL ================= -->
+  <div *ngIf="isAddFarmerModalOpen()" class="modal-overlay">
+    <div class="modal-card glass-panel">
+      <div class="modal-header">
+        <h3>🌾 Register New Sugarcane Farmer</h3>
+        <button class="btn btn-ghost btn-sm" (click)="closeAddFarmerModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Farmer Full Name *</label>
+          <input type="text" class="input-modern" placeholder="e.g. Anand Shinde" [(ngModel)]="newFarmer.name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Village / Taluka *</label>
+          <select class="input-modern" [(ngModel)]="newFarmer.village">
+            <option *ngFor="let v of villagesList.slice(1)" [value]="v">{{ v }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Sugarcane Supply (Tons) *</label>
+          <input type="number" class="input-modern" placeholder="e.g. 145.5" [(ngModel)]="newFarmer.supply">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Amount Paid (₹)</label>
+            <input type="number" class="input-modern" placeholder="e.g. 350000" [(ngModel)]="newFarmer.paid">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Pending Payment (₹)</label>
+            <input type="number" class="input-modern" placeholder="e.g. 45000" [(ngModel)]="newFarmer.pending">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeAddFarmerModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="saveNewFarmer()">Save to Database</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SYSTEM HEALTH & DIAGNOSTICS MODAL ================= -->
+  <div *ngIf="isHealthModalOpen()" class="modal-overlay">
+    <div class="modal-card glass-panel">
+      <div class="modal-header">
+        <h3>🔍 Sanjivani Mill System Status</h3>
+        <button class="btn btn-ghost btn-sm" (click)="isHealthModalOpen.set(false)">✕</button>
+      </div>
+
+      <div class="modal-body" *ngIf="api.status() as st">
+        <div class="diag-group">
+          <div class="diag-label">System Mode:</div>
+          <div class="diag-value font-mono text-emerald">{{ st.database.mode }}</div>
+        </div>
+
+        <div class="diag-group">
+          <div class="diag-label">Database Connection:</div>
+          <div class="diag-value font-mono" [class.text-emerald]="st.database.connected" [class.text-amber]="!st.database.connected">
+            {{ st.database.connected ? 'Active (' + st.database.name + ' on ' + st.database.host + ')' : 'Using Verified Fallback' }}
+          </div>
+        </div>
+
+        <div class="diag-group">
+          <div class="diag-label">Indexed Farmers:</div>
+          <div class="diag-value font-mono">{{ st.database.farmerCount }} Active Suppliers</div>
+        </div>
+
+        <div class="diag-group">
+          <div class="diag-label">AI Engine:</div>
+          <div class="diag-value font-mono">{{ st.openai.configured ? 'Active (' + st.openai.model + ')' : 'Local Engine' }}</div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary" (click)="isHealthModalOpen.set(false)">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div *ngIf="toastMessage()" class="toast-popup glass-panel">
+    <span>✨</span>
+    <span>{{ toastMessage() }}</span>
+  </div>
+
+</div>
